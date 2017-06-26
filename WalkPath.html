@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Walk Path</title>
+	<style type='text/css'>
+		canvas { border: thin solid black; }
+	</style>
+</head>
+<body>
+	<canvas id='canvas' width='800' height='600'></canvas>
+	<script type='text/javascript'>
+	var WIDTH = 800;
+	var HEIGHT = 600;
+	var FPS = 60;
+
+	var stops = [
+		{ x: 100, y: 100 },
+		{ x: 300, y: 100 },
+		{ x: 500, y: 200 },
+		{ x: 300, y: 300 },
+		{ x: 100, y: 300 },
+	];
+	var cur = 1;
+	var next = stops[cur];
+
+	var guard = {
+		x: stops[0].x,
+		y: stops[0].y,
+		dx: 0,
+		dy: 0,
+		speed: 2,
+	};
+
+	// setup garbage
+	var canvasElement = document.getElementById('canvas');
+	canvasElement.width = WIDTH;
+	canvasElement.height = HEIGHT;
+	var ctx = canvasElement;
+
+	function init()
+	{
+		// Uhh, probably should have something in here.
+	}
+
+	// more gargleblaster
+	if (canvasElement.getContext) {
+		ctx = canvasElement.getContext("2d");
+		init();
+
+		setInterval(function() {
+			update();
+			draw(ctx);
+		}, 1000/FPS);
+
+	}
+	else {
+		alert("Your browser doesn't seem to support the <canvas> element. Sorry.");
+	}
+
+	function update() {
+
+		next = stops[cur];
+
+		var angle = -Math.atan2( next.y-guard.y, next.x-guard.x );
+		guard.dx =   guard.speed * Math.cos(angle);
+		guard.dy = - guard.speed * Math.sin(angle);
+
+		guard.x += guard.dx;
+		guard.y += guard.dy;
+
+		if ( distance(guard.x, guard.y, next.x, next.y) < 1 ) {
+			cur++;
+			if ( cur >= stops.length ) {
+				cur = 0;
+			}
+		}
+
+
+	}
+
+	function draw(ctx) {
+		ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+		ctx.fillStyle = "#000000";
+		ctx.fillText("dx: "+roundTenths(guard.dx)+", dy: "+roundTenths(guard.dy), 20, 560);
+		var dist = distance(guard.x, guard.y, next.x, next.y);
+		ctx.fillText("distance: "+roundTenths(dist), 20, 580);
+
+		// draw the guard
+		ctx.beginPath();
+		ctx.arc( guard.x, guard.y, 20,  0, 2*Math.PI, true );
+		ctx.fill();
+
+		// draw the stops
+		ctx.fillStyle = "#FF0000";
+		for ( var i=0; i<stops.length; i++ ) {
+			ctx.fillRect( stops[i].x, stops[i].y, 2, 2 );
+		}
+		// show where the guard is looking
+		ctx.strokeStyle = "#FF0000";
+		drawLine(guard.x + 0.5, guard.y + 0.5, guard.x + 0.5 + (guard.dx*10), guard.y + 0.5 + (guard.dy*10));
+	}
+
+	function drawLine( x1, y1, x2, y2 ) {
+		ctx.beginPath();
+		ctx.moveTo(x1, y1);
+		ctx.lineTo(x2, y2);
+		ctx.closePath();
+		ctx.stroke();
+	}
+
+	// utility functions
+	function rad2deg( r ) { return (r*180)/Math.PI; }
+	function deg2rad( d ) { return (d*Math.PI)/180; }
+	function roundTenths( n ) { return Math.round(n*10)/10; }
+	function distance( x1, y1, x2, y2 ) { return Math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)); }
+
+	</script>
+</body>
+</html>

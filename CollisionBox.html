@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Collision Box</title>
+	<style type='text/css'>
+		canvas { border: 1px solid black; }
+	</style>
+</head>
+<body>
+	<p>There's no interaction here. Just showing how you can tell if a rectangle collides
+	with another rectangle.</p>
+
+	<canvas id='canvas' width='800' height='600'></canvas>
+	<script type='text/javascript'>
+		var WIDTH = 800;
+		var HEIGHT = 600;
+		var FPS = 60;
+
+		var pX = 50;
+		var pY = 50;
+		var pDx = 5;
+		var pDy = 5;
+
+		var bx = Math.random()*WIDTH;
+		var by = Math.random()*HEIGHT;
+
+		var score = 0;
+
+		var boxColor = "#FF0000";
+
+		var canvasElement = document.getElementById('canvas');
+		canvasElement.width = WIDTH;
+		canvasElement.height = HEIGHT;
+		var canvas = canvasElement;
+
+		if (canvasElement.getContext) {
+			canvas = canvasElement.getContext("2d");
+
+			setInterval(function() {
+				update();
+				draw();
+			}, 1000/FPS);
+
+		}
+		else {
+			alert("Your browser doesn't seem to support the <canvas> element. Sorry.");
+		}
+
+		function draw() {
+			canvas.clearRect(0, 0, WIDTH, HEIGHT);
+			canvas.fillStyle = "#00FF00";
+			canvas.fillRect(pX, pY, 10, 10);
+			canvas.fillStyle = boxColor;
+			canvas.fillRect(bx, by, 50, 50);
+			canvas.fillStyle = "#000000";
+			canvas.textBaseline = "top";
+			canvas.font = "24px sans-serif";
+			canvas.fillText(""+score, WIDTH-50, 50);
+		}
+
+		function update() {
+			pX += pDx;
+			pY += pDy;
+
+			if ( pX > WIDTH || pX < 0 )
+				pDx = -pDx;
+			if ( pY > HEIGHT || pY < 0 )
+				pDy = -pDy;
+
+			if ( collide(pX, pY, 10, 10, bx, by, 50, 50) === true ) {
+				/* boxColor = "#FFFFFF"; */
+				score += 1;
+				bx = Math.random()*WIDTH;
+				by = Math.random()*HEIGHT;
+			}
+		}
+
+		function collide( px, py, pw, ph, bx, by, bw, bh ) {
+			if ( px > bx + bw )
+				return false;
+			if ( py > by + bh )
+				return false;
+			if ( bx > px + pw )
+				return false;
+			if ( by > py + ph )
+				return false;
+
+			return true;
+		}
+
+	</script>
+</body>
+</html>

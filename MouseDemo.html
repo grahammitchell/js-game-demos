@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>MouseDemo</title>
+	<style type='text/css'>canvas { border: thin solid black; }</style>
+</head>
+<body>
+	<canvas id='canvas' width='800' height='600'></canvas>
+	<script type='text/javascript'>
+	var ctx;
+	var mouse_x = 0, mouse_y = 0;
+
+	var curColor;
+	var curMessage;
+
+	function init()
+	{
+		curColor = "red";
+		curMessage = "The square is red.";
+	}
+
+	function draw(ctx) {
+		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+		ctx.fillStyle = "black";
+		if ( mouse_x === 0 )
+			ctx.fillText("(Click anywhere on the screen.)", 400, 300);
+
+		ctx.font = "24pt Calibri bold";
+		ctx.fillText(curMessage, 400, 100);
+
+		ctx.fillStyle = curColor;
+		ctx.fillRect(250, 100, 100, 100);
+
+	}
+
+	function mouseClicked(e) {
+		var evt = e || window.event;
+
+		mouse_x = evt.pageX - ctx.canvas.offsetLeft;
+		mouse_y = evt.pageY - ctx.canvas.offsetTop;
+
+		console.log("You clicked at (" + mouse_x + "," + mouse_y + ")");
+		curMessage = "The square is green.";
+		curColor = "green";
+
+		draw(ctx);
+	}
+
+	document.addEventListener('click', mouseClicked);
+
+	function main() {
+		ctx = document.getElementById('canvas').getContext("2d");
+		init();
+		draw(ctx);
+	}
+
+	main();
+	</script>
+</body>
+</html>

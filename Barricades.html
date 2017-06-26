@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Barricades</title>
+	<style type='text/css'>
+		canvas { border: 1px solid black; }
+	</style>
+</head>
+<body>
+	<h1>Use the arrow keys to move around.</h1>
+	<p>In this one, the "pushback" from hitting a barricade is too much, so you can't get right
+	 up next to a barricade unless I cheat and move them so you wouldn't notice.</p>
+	<canvas id='canvas' width='800' height='600'></canvas>
+	<script type='text/javascript'>
+		var ctx; 
+		var player = { x: 400, y: 300, w: 20, h: 20, dx: 5, dy: 5 };
+
+		var left = false, right = false, up = false, down = false;
+
+		var box1 = { x: 100, y: 100, w: 50,  h: 50 };
+		var box2 = { x: 500, y: 300, w: 100, h: 75 };
+
+		function update() {
+			var orig = { x: player.x, y: player.y };
+
+			// move the player
+			if ( up )
+				player.y -= player.dy;
+			if ( down )
+				player.y += player.dy;
+			if ( left )
+				player.x -= player.dx;
+			if ( right )
+				player.x += player.dx;
+
+			// check if the player ran into a box and, if so, move back
+			if ( collide(player, box1) || collide(player,box2) ) {
+				player.x = orig.x;
+				player.y = orig.y;
+			}
+
+			// make sure the player didn't go out of bounds
+			if ( player.x < 0 )
+				player.x = 0;
+			else if ( player.x + player.w > ctx.canvas.width )
+				player.x = ctx.canvas.width - player.w;
+			if ( player.y < 0 )
+				player.y = 0;
+			else if ( player.y + player.h > ctx.canvas.height )
+				player.y = ctx.canvas.height - player.h;
+		}
+
+		function collide( player, box ) {
+			if ( player.x > box.x + box.w )
+				return false;
+			if ( player.y > box.y + box.h )
+				return false;
+			if ( box.x > player.x + player.w )
+				return false;
+			if ( box.y > player.y + player.h )
+				return false;
+
+			return true;
+		}
+
+
+		function draw(ctx) {
+			ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+			ctx.fillStyle = "#00FF00";
+			ctx.fillRect(player.x, player.y, player.w, player.h);
+			ctx.fillStyle = "#000000";
+			ctx.fillRect(box1.x, box1.y, box1.w, box1.h);
+			ctx.fillRect(box2.x, box2.y, box2.w, box2.h);
+		}
+
+		var KEY_UP = 38, KEY_DOWN = 40, KEY_LEFT = 37, KEY_RIGHT = 39;
+
+		function handleKeyDown(evt) {
+			if ( evt.keyCode == KEY_UP )
+				up = true;
+			if ( evt.keyCode == KEY_DOWN )
+				down = true;
+			if ( evt.keyCode == KEY_LEFT )
+				left = true;
+			if ( evt.keyCode == KEY_RIGHT )
+				right = true;
+
+			if ( 37 <= evt.keyCode && evt.keyCode <= 40 )
+				evt.preventDefault();
+		}
+
+		function handleKeyUp(evt) {
+			if ( evt.keyCode == KEY_UP )
+				up = false;
+			if ( evt.keyCode == KEY_DOWN )
+				down = false;
+			if ( evt.keyCode == KEY_LEFT )
+				left = false;
+			if ( evt.keyCode == KEY_RIGHT )
+				right = false;
+
+			if ( 37 <= evt.keyCode && evt.keyCode <= 40 )
+				evt.preventDefault();
+		}
+
+		function main() {
+			ctx = document.getElementById('canvas').getContext("2d");
+			document.addEventListener('keydown', handleKeyDown);
+			document.addEventListener('keyup', handleKeyUp);
+			setInterval(function() { update(); draw(ctx); }, 1000/60);
+		}
+
+		main();
+	</script>
+</body>
+</html>

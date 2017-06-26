@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Turret</title>
+	<style type='text/css'>
+		canvas { border: thin solid black; }
+	</style>
+</head>
+<body>
+	<canvas id='canvas' width='800' height='600'></canvas>
+	<script type='text/javascript'>
+	var WIDTH = 800;
+	var HEIGHT = 600;
+	var FPS = 60;
+
+	var left = false;	// keyboard left is pressed; currently unused
+	var right = false;	// ditto; currently unused
+	var firing = false;
+
+	var bullets = [];
+
+	var mouse = {		// where the mouse pointer is. Updates 60 times per second
+		x: 0,
+		y: 0,
+	};
+
+	var radius = 100;	// of the turret base
+
+	var barrel = {		// where the tip of the gun is. Updates every frame.
+		x: 0,
+		y: 0,
+	};
+
+	var base = {			// where the bullets originate. Currently the very back of the middle of the turret
+		x: WIDTH/2,
+		y: HEIGHT,
+	};
+
+	var angle = 0;		// The angle the turret makes with the horizon and the mouse
+	var emit_dx = 0;	// used to find where the tip of the gun should move to
+	var emit_dy = 0;
+	var bspeed = 3;		// bullet speed, in pixels per frame
+
+	var curStamp = 0;
+	var lastStamp = 0;
+	var elapsed = 0;
+	var fireTime = 0;
+	var magazineSize = 20;	// how many shots before you have to reload
+
+	// setup garbage
+	var canvasElement = document.getElementById('canvas');
+	canvasElement.width = WIDTH;
+	canvasElement.height = HEIGHT;
+	var ctx = canvasElement;
+
+	function init()
+	{
+		// Uhh, probably should have something in here.
+	}
+
+	// more gargleblaster
+	if (canvasElement.getContext) {
+		ctx = canvasElement.getContext("2d");
+		init();
+
+		setInterval(function() {
+			update();
+			draw();
+		}, 1000/FPS);
+
+	}
+	else {
+		alert("Your browser doesn't seem to support the <canvas> element. Sorry.");
+	}
+
+	function makeBullet(X, Y, W, H, DX, DY, SPEED) {
+		var bbb = {
+			x: X - 3,
+			y: Y - 1,
+			w: W,
+			h: H,
+			dx: SPEED * DX / radius,
+			dy: SPEED * DY / radius,
+		};
+		return bbb;
+	}
+
+	function update() {
+		// how many milliseconds since last time we were here?
+		curStamp = Date.now();
+		elapsed = curStamp - lastStamp;
+
+		// subtract that from the amount of time we still need to wait before firing again
+		fireTime -= elapsed;
+
+		// arctangent tells us the angle between the mouse and the turret base
+		angle = -Math.atan2( mouse.y-base.y, mouse.x-base.x );
+
+		// figure out where on the turret circle the bullet should emit from
+		emit_dy = - (radius+5) * Math.sin(angle);
+		emit_dx =   (radius+5) * Math.cos(angle);
+
+		// move the little circle to track with the mouse
+		barrel.x = base.x + emit_dx;
+		barrel.y = base.y + emit_dy;
+
+		// if they're pressing down the button and we haven't fired recently...
+		if ( firing && fireTime <= 0 )
+		{
+			var bullet = makeBullet(barrel.x, barrel.y, 6, 6, emit_dx, emit_dy, bspeed);
+			bullets.push(bullet);
+			magazineSize--;
+			fireTime = 100;
+			if ( magazineSize <= 0 ) {
+				magazineSize = 20;
+				// fireTime = 500; // make them wait to reload
+			}
+
+		}
+
+		// move all the bullets. Going backward so we do not have trouble if any get removed along the way
+		for ( var i=bullets.length-1; i>=0; i-- ) {
+			bullets[i].x += bullets[i].dx;
+			bullets[i].y += bullets[i].dy;
+			// when a bullet leaves the screen, remove it from the array
+			if ( bullets[i].y < 0 || bullets[i].y > HEIGHT || bullets[i].x < 0 || bullets[i].x > WIDTH )
+				bullets.splice(i, 1); // "splice"? Icky name.
+		}
+		// save a copy of the timestamp for next time through
+		lastStamp = curStamp;
+	}
+
+	function draw() {
+		ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+		// draw da bullets
+		ctx.fillStyle = "#00CC00";
+		for ( var i=0; i<bullets.length; ++i ) {
+			ctx.fillRect(bullets[i].x, bullets[i].y, bullets[i].w, bullets[i].h);
+		}
+
+		// draw da words for debugging
+		ctx.fillStyle = "#000000";
+		ctx.fillText("("+mouse.x+","+mouse.y+")", 20, 100);
+		ctx.fillText("Bullets: "+bullets.length, 20, 120);
+		ctx.fillText("Angle: "+Math.round(rad2deg(angle)), 20, 140);
+		// ctx.fillText("dx: "+emit_dx+", dy: "+emit_dy, 20, 160);
+		// ctx.fillText("dx: "+(3*emit_dx/100)+", dy: "+(3*emit_dy/100), 20, 180);
+
+		// draw the turret
+		ctx.beginPath();
+		//          x        y          start  arclen  ccw?
+		ctx.arc( WIDTH/2, HEIGHT, radius, 0, Math.PI, true );	// base
+		ctx.fill();
+		ctx.beginPath(); // so it does not connect the two arcs to each other
+		ctx.arc( barrel.x, barrel.y, 6, 0, 2*Math.PI );			// tip of barrel
+		ctx.fill();
+
+
+		// draw the laser sight to the mouse for debugging
+		ctx.beginPath();
+		ctx.strokeStyle = "#FF0000";
+		ctx.moveTo( base.x, base.y );
+		ctx.lineTo( mouse.x, mouse.y );
+		ctx.closePath();
+		//ctx.stroke();
+
+	}
+
+	// utility functions
+	function rad2deg( r ) { return (r*180)/Math.PI; }
+	function deg2rad( d ) { return (d*Math.PI)/180; }
+	function distance( x1, y1, x2, y2 ) { return Math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)); }
+
+	// so keys do not move the browser window around
+	function preventDefault(e) {
+		var evt = e || window.event;
+		if ( evt.preventDefault )
+			evt.preventDefault();
+		else
+			evt.returnValue = false;
+
+		return false;
+	}
+
+	// currently not used
+	function handleKeyDown(e) {
+		var evt = e || window.event;
+		var ch = evt.keyCode;
+
+		if ( ch === 37 ) /* LEFT */
+			left = true;
+		if ( ch === 39 ) /* RIGHT */
+			right = true;
+		if ( ch === 37 || ch === 39 )
+			return preventDefault(evt);
+	}
+
+	// currently not used
+	function handleKeyUp(e) {
+		var evt = e || window.event;
+		var ch = evt.keyCode;
+
+		if ( ch === 37 ) /* LEFT */
+			left = false;
+		if ( ch === 39 ) /* RIGHT */
+			right = false;
+		if ( ch === 37 || ch === 39 )
+			return preventDefault(evt);
+	}
+
+	// short and sweet
+	function handleMouseDown(e) {
+		var evt = e || window.event;
+		if ( evt.button === 0 ) // left mouse button
+			firing = true;
+	}
+
+	function handleMouseUp(e) {
+		var evt = e || window.event;
+		if ( evt.button === 0 )
+			firing = false;
+	}
+
+	function handleMouseMove(e) {
+		var evt = e || window.event;
+		// fix things b/c (0,0) of the canvas != (0,0) of the page
+		mouse.x = evt.pageX - canvasElement.offsetLeft;
+		mouse.y = evt.pageY - canvasElement.offsetTop;
+	}
+
+	document.addEventListener('keydown', handleKeyDown);
+	document.addEventListener('keyup', handleKeyUp);
+	document.addEventListener('mousedown', handleMouseDown);
+	document.addEventListener('mouseup', handleMouseUp);
+	document.addEventListener('mousemove', handleMouseMove);
+
+	// yeah
+	</script>
+</body>
+</html>

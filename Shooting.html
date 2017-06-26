@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Shooting</title>
+	<style type='text/css'>
+		canvas { border: thin solid black; }
+	</style>
+</head>
+<body>
+	<p>Press or hold SPACE to fire.</p>
+	<canvas id='canvas' width='800' height='600'></canvas>
+	<script type='text/javascript'>
+	var ctx;
+	var FPS = 60;
+
+	var firing = false;
+	var bullets = [];
+	var bspeed = 3;		// bullet speed, in pixels per frame
+
+	var gun = {
+		x: 0,
+		y: 150,
+	};
+
+	var curStamp = 0;
+	var lastStamp = 0;
+	var elapsed = 0;
+	var fireTime = 0;
+
+	function update() {
+		// how many milliseconds since last time we were here?
+		curStamp = Date.now();
+		elapsed = curStamp - lastStamp;
+
+		// subtract that from the amount of time we still need to wait before firing again
+		fireTime -= elapsed;
+
+		// if they're pressing down the button and we haven't fired recently...
+		if ( firing && fireTime <= 0 )
+		{
+			var bullet = {
+				x: gun.x,
+				y: gun.y + 1, // add 1 to center the bullets in the gun
+			};
+			bullets.push(bullet);
+			fireTime = 100;
+		}
+
+		for ( var i=0; i<bullets.length; i++ ) {
+			bullets[i].x += bspeed;
+		}
+		lastStamp = curStamp;
+	}
+
+	function draw() {
+		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+		// draw the bullets
+		ctx.fillStyle = "#00CC00";
+		for ( var i=0; i<bullets.length; ++i ) {
+			ctx.fillRect(bullets[i].x, bullets[i].y, 4, 4);
+		}
+
+		// draw the gun
+		ctx.fillStyle = "#999999";
+		ctx.fillRect(gun.x, gun.y, 20, 6);
+	}
+
+	// so keys do not move the browser window around
+	function preventDefault(e) {
+		var evt = e || window.event;
+		if ( evt.preventDefault )
+			evt.preventDefault();
+		else
+			evt.returnValue = false;
+		return false;
+	}
+
+	function handleKeyDown(e) {
+		var evt = e || window.event;
+		if ( evt.keyCode === 32 ) { /* SPACE */
+			firing = true;
+			return preventDefault(evt);
+		}
+	}
+
+	function handleKeyUp(e) {
+		var evt = e || window.event;
+		if ( evt.keyCode === 32 ) { /* SPACE */
+			firing = false;
+			return preventDefault(evt);
+		}
+	}
+
+	function main() {
+		ctx = document.getElementById('canvas').getContext("2d");
+		document.addEventListener('keydown', handleKeyDown);
+		document.addEventListener('keyup', handleKeyUp);
+
+		setInterval(function() {
+			update();
+			draw();
+		}, 1000/FPS);
+	}
+
+	main();
+	</script>
+</body>
+</html>

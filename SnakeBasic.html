@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Snake Basic 1</title>
+	<style type='text/css'>
+		canvas { border: 1px solid black; }
+	</style>
+</head>
+<body>
+	<canvas id='canvas' width='800' height='600'></canvas>
+	<script type='text/javascript'>
+		var WIDTH = 800;
+		var HEIGHT = 600;
+		var FPS = 60;
+
+		var LENGTH = 7;
+
+		var head = {
+			x: 50,
+			y: 50,
+			w: 10,
+			h: 10,
+			dx: 5,
+			dy: 5,
+		};
+
+		var tail = [];
+
+		for ( var i = 0; i<LENGTH; i++ ) {
+			var tailpiece = {
+				x: head.x,
+				y: head.y,
+			};
+			tail.push(tailpiece);
+		}
+
+		var left = false;
+		var right = false;
+		var up = false;
+		var down = false;
+
+		var canvasElement = document.getElementById('canvas');
+		canvasElement.width = WIDTH;
+		canvasElement.height = HEIGHT;
+		var canvas = canvasElement;
+
+		if (canvasElement.getContext) {
+			canvas = canvasElement.getContext("2d");
+
+			setInterval(function() {
+				update();
+				draw();
+			}, 1000/FPS);
+
+		}
+		else {
+			alert("Your browser doesn't seem to support the <canvas> element. Sorry.");
+		}
+
+		function update() {
+			if ( up || down || left || right ) {
+				var copy = {
+					x: head.x,
+					y: head.y,
+				};
+				tail.push(copy);
+				tail.shift();
+			}
+			if ( up )
+				head.y -= head.dy;
+			if ( down )
+				head.y += head.dy;
+			if ( left )
+				head.x -= head.dx;
+			if ( right )
+				head.x += head.dx;
+		}
+
+		function draw() {
+			canvas.clearRect(0, 0, WIDTH, HEIGHT);
+			canvas.fillStyle = "#0000FF";
+			for ( var i=0; i<tail.length; i++ ) {
+				canvas.fillRect(tail[i].x, tail[i].y, head.w, head.h);
+			}
+			canvas.fillStyle = "#00FF00";
+			canvas.fillRect(head.x, head.y, head.w, head.h);
+		}
+
+		function handleKeyDown(evt) {
+			if ( evt.keyCode == 38 ) /* UP */
+				up = true;
+			if ( evt.keyCode == 40 ) /* DOWN */
+				down = true;
+			if ( evt.keyCode == 37 ) /* LEFT */
+				left = true;
+			if ( evt.keyCode == 39 ) /* RIGHT */
+				right = true;
+
+			if ( 37 <= evt.keyCode && evt.keyCode <= 40 )
+				evt.preventDefault();
+		}
+
+		function handleKeyUp(evt) {
+			if ( evt.keyCode == 38 ) /* UP */
+				up = false;
+			if ( evt.keyCode == 40 ) /* DOWN */
+				down = false;
+			if ( evt.keyCode == 37 ) /* LEFT */
+				left = false;
+			if ( evt.keyCode == 39 ) /* RIGHT */
+				right = false;
+
+			if ( 37 <= evt.keyCode && evt.keyCode <= 40 )
+				evt.preventDefault();
+		}
+
+		document.addEventListener('keydown', handleKeyDown);
+		document.addEventListener('keyup', handleKeyUp);
+		document.addEventListener('mousedown', handleMouseDown);
+		document.addEventListener('mouseup', handleMouseUp);
+
+	</script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Etch-a-Sketch Smooth</title>
+	<style type='text/css'>
+		canvas { border: 1px solid black; }
+	</style>
+</head>
+<body>
+	<h1>Use the arrow keys to move around.</h1>
+	<canvas id='canvas' width='800' height='600'></canvas>
+	<script type='text/javascript'>
+		var WIDTH = 800;
+		var HEIGHT = 600;
+		var FPS = 60;
+
+		var pX = 50;
+		var pY = 50;
+		var pDx = 5;
+		var pDy = 5;
+
+		var left = false;
+		var right = false;
+		var up = false;
+		var down = false;
+
+		var canvasElement = document.getElementById('canvas');
+		canvasElement.width = WIDTH;
+		canvasElement.height = HEIGHT;
+		var canvas = canvasElement;
+
+		if (canvasElement.getContext) {
+			canvas = canvasElement.getContext("2d");
+
+			setInterval(function() {
+				update();
+				draw();
+			}, 1000/FPS);
+
+		}
+		else {
+			alert("Your browser doesn't seem to support the <canvas> element. Sorry.");
+		}
+
+		function update() {
+			if ( up )
+				pY -= pDy;
+			if ( down )
+				pY += pDy;
+			if ( left )
+				pX -= pDx;
+			if ( right )
+				pX += pDx;
+		}
+
+		function draw() {
+			/* canvas.clearRect(0, 0, WIDTH, HEIGHT); */
+			canvas.fillStyle = "#00FF00";
+			canvas.fillRect(pX, pY, 10, 10);
+		}
+
+		function handleKeyDown(evt) {
+			if ( evt.keyCode == 38 ) /* UP */
+				up = true;
+			if ( evt.keyCode == 40 ) /* DOWN */
+				down = true;
+			if ( evt.keyCode == 37 ) /* LEFT */
+				left = true;
+			if ( evt.keyCode == 39 ) /* RIGHT */
+				right = true;
+
+			if ( 37 <= evt.keyCode && evt.keyCode <= 40 )
+				evt.preventDefault();
+		}
+
+		function handleKeyUp(evt) {
+			if ( evt.keyCode == 38 ) /* UP */
+				up = false;
+			if ( evt.keyCode == 40 ) /* DOWN */
+				down = false;
+			if ( evt.keyCode == 37 ) /* LEFT */
+				left = false;
+			if ( evt.keyCode == 39 ) /* RIGHT */
+				right = false;
+
+			if ( 37 <= evt.keyCode && evt.keyCode <= 40 )
+				evt.preventDefault();
+		}
+
+		document.addEventListener('keydown', handleKeyDown);
+		document.addEventListener('keyup', handleKeyUp);
+
+	</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Etch-a-Sketch</title>
+	<style type='text/css'>
+		canvas { border: 1px solid black; }
+	</style>
+</head>
+<body>
+	<h1>Use the arrow keys to move around.</h1>
+	<canvas id='canvas' width='800' height='600'></canvas>
+	<script type='text/javascript'>
+		var WIDTH = 800;
+		var HEIGHT = 600;
+		var FPS = 60;
+
+		var pX = 50;
+		var pY = 50;
+		var pDx = 5;
+		var pDy = 5;
+
+		var canvasElement = document.getElementById('canvas');
+		canvasElement.width = WIDTH;
+		canvasElement.height = HEIGHT;
+		var canvas = canvasElement;
+
+		if (canvasElement.getContext) {
+			canvas = canvasElement.getContext("2d");
+
+			setInterval(function() {
+				draw();
+			}, 1000/FPS);
+
+		}
+		else {
+			alert("Your browser doesn't seem to support the <canvas> element. Sorry.");
+		}
+
+		function draw() {
+			/* canvas.clearRect(0, 0, WIDTH, HEIGHT); */
+			canvas.fillStyle = "#00FF00";
+			canvas.fillRect(pX, pY, 10, 10);
+		}
+
+		/* F1 through F12 are 113 through 123
+		   0 through 9 are 48 through 57
+		   a through z are 65 through 90 */
+
+		function handleKeypress(evt) {
+			if ( evt.keyCode == 38 ) /* UP */
+				pY -= pDy;
+			if ( evt.keyCode == 40 ) /* DOWN */
+				pY += pDy;
+			if ( evt.keyCode == 37 ) /* LEFT */
+				pX -= pDx;
+			if ( evt.keyCode == 39 ) /* RIGHT */
+				pX += pDx;
+
+			if ( 37 <= evt.keyCode && evt.keyCode <= 40 )
+				evt.preventDefault();
+		}
+
+		document.addEventListener('keydown', handleKeypress);
+
+	</script>
+</body>
+</html>

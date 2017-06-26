@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Collect Fruit</title>
+	<style type='text/css'>
+		canvas { border: thin solid black; }
+	</style>
+</head>
+<body>
+	<p>Try to click on the fruit!</p>
+
+	<canvas id='canvas' width='800' height='600'></canvas>
+	<script type='text/javascript'>
+		var WIDTH = 800;
+		var HEIGHT = 600;
+		var FPS = 60;
+		var score = 0;
+		var mx = 0;
+		var my = 0;
+		var clicked = false;
+		var imageOK = false;
+		var fruit = new Image();
+		var x = 0;
+		var y = 0;
+		var dx = 2;
+		var dy = 2;
+
+		var canvasElement = document.getElementById('canvas');
+		canvasElement.width = WIDTH;
+		canvasElement.height = HEIGHT;
+		var ctx = canvasElement;
+
+		function init()
+		{
+			ctx.font = "24pt Arial, sans-serif";
+			ctx.textBaseline = "top";
+			fruit.onload = function() {
+				imageOK = true;
+			}
+			fruit.src = "pineapple.png";
+			x = Math.random()*(WIDTH-50);
+			y = Math.random()*(HEIGHT-50);
+		}
+
+		if (canvasElement.getContext) {
+			ctx = canvasElement.getContext("2d");
+			init();
+
+			setInterval(function() {
+				update();
+				draw();
+			}, 1000/FPS);
+
+		}
+		else {
+			alert("Your browser doesn't seem to support the <canvas> element. Sorry.");
+		}
+
+
+		function contains( px, py, pw, ph, bx, by ) {
+			if ( px > bx )
+				return false;
+			if ( py > by )
+				return false;
+			if ( bx > px + pw )
+				return false;
+			if ( by > py + ph )
+				return false;
+
+			return true;
+		}
+
+		function update() {
+			if ( clicked ) {
+				if ( contains(x,y,50,50,mx,my) == true ) {
+					x = Math.random()*(WIDTH-50);
+					y = Math.random()*(HEIGHT-50);
+					score++;
+				}
+				clicked = false;
+			}
+			else if ( imageOK ) {
+				x += dx;
+				y += dy;
+				if ( x+50 > WIDTH || x < 0 )
+					dx = -dx;
+				if ( y+50 > HEIGHT || y < 0 )
+					dy = -dy;
+			}
+
+		}
+
+		function draw() {
+			ctx.clearRect(0, 0, WIDTH, HEIGHT);
+			if ( imageOK )
+				ctx.drawImage(fruit, x, y);
+			ctx.fillText(""+score, 50, 20);
+		}
+
+		function getClick(e) {
+			var evt = e || window.event;
+			mx = evt.pageX - ctx.canvas.offsetLeft;
+			my = evt.pageY - ctx.canvas.offsetTop;
+			clicked = true;
+		}
+
+		canvasElement.addEventListener("mousedown", getClick );
+	</script>
+</body>
+</html>

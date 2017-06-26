@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Moving Shooting</title>
+	<style type='text/css'>
+		canvas { border: thin solid black; }
+	</style>
+</head>
+<body>
+	<p>Move the gun up and down using UP and DOWN. Press or hold SPACE to fire.</p>
+	<canvas id='canvas' width='800' height='600'></canvas>
+	<script type='text/javascript'>
+	var ctx;
+	var FPS = 60;
+
+	var firing = false;
+	var up = false;
+	var down = false;
+	var bullets = [];
+	var bspeed = 3;		// bullet speed, in pixels per frame
+
+	var gun = {
+		x: 0,
+		y: 150,
+	};
+
+	var curStamp = 0;
+	var lastStamp = 0;
+	var elapsed = 0;
+	var fireTime = 0;
+
+	function update() {
+		// how many milliseconds since last time we were here?
+		curStamp = Date.now();
+		elapsed = curStamp - lastStamp;
+
+		// subtract that from the amount of time we still need to wait before firing again
+		fireTime -= elapsed;
+
+		// move the gun
+		if ( up ) {
+			gun.y -= 2;
+		}
+		else if ( down ) {
+			gun.y += 2;
+		}
+
+		// if they're pressing down the button and we haven't fired recently...
+		if ( firing && fireTime <= 0 )
+		{
+			var bullet = {
+				x: gun.x + 16,
+				y: gun.y + 1, // add 1 to center the bullets in the gun
+			};
+			bullets.push(bullet);
+			fireTime = 100;
+		}
+
+		// move all the bullets. Going backward so we do not have trouble if any get removed along the way
+		for ( var i=bullets.length-1; i>=0; i-- ) {
+			bullets[i].x += bspeed;
+			// when a bullet leaves the screen, remove it from the array
+			if ( bullets[i].x > ctx.canvas.width )
+				bullets.splice(i, 1); 
+		}
+
+		lastStamp = curStamp;
+	}
+
+	function draw() {
+		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+		// draw the bullets
+		ctx.fillStyle = "#00CC00";
+		for ( var i=0; i<bullets.length; ++i ) {
+			ctx.fillRect(bullets[i].x, bullets[i].y, 4, 4);
+		}
+
+		// draw the gun
+		ctx.fillStyle = "#999999";
+		ctx.fillRect(gun.x, gun.y, 20, 6);
+	}
+
+	// so keys do not move the browser window around
+	function preventDefault(e) {
+		var evt = e || window.event;
+		if ( evt.preventDefault )
+			evt.preventDefault();
+		else
+			evt.returnValue = false;
+		return false;
+	}
+
+	function handleKeyDown(e) {
+		var evt = e || window.event;
+		if ( evt.keyCode === 32 ) { /* SPACE */
+			firing = true;
+			return preventDefault(evt);
+		}
+		else if ( evt.keyCode === 38 ) { /* UP */
+			up = true;
+			return preventDefault(evt);
+		}
+		else if ( evt.keyCode === 40 ) { /* DOWN */
+			down = true;
+			return preventDefault(evt);
+		}
+	}
+
+	function handleKeyUp(e) {
+		var evt = e || window.event;
+		if ( evt.keyCode === 32 ) { /* SPACE */
+			firing = false;
+			return preventDefault(evt);
+		}
+		else if ( evt.keyCode === 38 ) { /* UP */
+			up = false;
+			return preventDefault(evt);
+		}
+		else if ( evt.keyCode === 40 ) { /* DOWN */
+			down = false;
+			return preventDefault(evt);
+		}
+	}
+
+	function main() {
+		ctx = document.getElementById('canvas').getContext("2d");
+		document.addEventListener('keydown', handleKeyDown);
+		document.addEventListener('keyup', handleKeyUp);
+
+		setInterval(function() {
+			update();
+			draw();
+		}, 1000/FPS);
+	}
+
+	main();
+	</script>
+</body>
+</html>

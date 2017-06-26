@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html><head>
+	<meta charset="UTF-8">
+	<title>Many Rectangles</title>
+	<style type='text/css'>
+		canvas { border: thin solid black; }
+	</style>
+</head>
+<body>
+	<p>No interaction here. Just showing how you can use an array of objects to move
+	a bunch of things around at once.</p>
+
+	<canvas id='canvas' width='800' height='600'></canvas>
+	<script type='text/javascript'>
+		var FPS = 60;
+		var COUNT = 30;
+		var boxes = [];
+		var ctx;
+
+		function main()
+		{
+			ctx = document.getElementById('canvas').getContext("2d");
+			init();
+			setInterval(function() {
+				update();
+				draw();
+			}, 1000/FPS);
+		}
+
+		function init()
+		{
+			for ( var i=0; i<COUNT; i++ ) {
+				var rect = {};
+					rect.w  = 10 + Math.random()*40;
+					rect.h  = 10 + Math.random()*40;
+					rect.x  = Math.random()*(ctx.canvas.width - rect.w);
+					rect.y  = Math.random()*(ctx.canvas.height - rect.h);
+					rect.dx = -3 + Math.random()*7;
+					rect.dy = -3 + Math.random()*7;
+				boxes.push(rect);
+			}
+		}
+
+		function update()
+		{
+			for ( var i=0; i<boxes.length; i++ ) {
+				boxes[i].x += boxes[i].dx;
+				boxes[i].y += boxes[i].dy;
+
+				if ( boxes[i].x + boxes[i].w > ctx.canvas.width || boxes[i].x < 0 )
+					boxes[i].dx *= -1;
+				if ( boxes[i].y + boxes[i].h > ctx.canvas.height || boxes[i].y < 0 )
+					boxes[i].dy *= -1;
+			}
+		}
+
+		function draw()
+		{
+			ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+			for ( var i=0; i<boxes.length; i++ ) {
+				ctx.fillRect(boxes[i].x, boxes[i].y, boxes[i].w, boxes[i].h);
+			}
+		}
+
+		main();
+	</script>
+</body>
+</html>

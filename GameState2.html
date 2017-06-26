@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Game State</title>
+	<style type='text/css'>canvas { border: thin solid black; }</style>
+</head>
+<body>
+	<canvas id='canvas' width='800' height='600'></canvas>
+	<script type='text/javascript'>
+	"use strict";
+	var ctx;
+	var MENU = 0, PLAY = 1, GAMEOVER = 2;
+	var state = MENU;
+	var timerID = -1;
+	var mouse = { x: 0, y: 0, clicked: false };
+	var playButton = {};
+	var waitTime = 0;
+	var lastTime = 0;
+	var lives = 5;
+	var brick = {};
+
+	function contains( r, m ) {
+		return ! (r.x>m.x || r.y>m.y || m.x>r.x+r.w || m.y>r.y+r.h );
+	}
+
+	function getClick(e) {
+		var evt = e || window.event;
+		mouse.x = evt.pageX - ctx.canvas.offsetLeft;
+		mouse.y = evt.pageY - ctx.canvas.offsetTop;
+		mouse.clicked = true;
+	}
+
+	function main() {
+		ctx = document.getElementById('canvas').getContext("2d");
+		document.addEventListener('click', getClick);
+		document.addEventListener('drag', getClick);
+		init();
+		changeState(MENU);
+	}
+
+	function init()
+	{
+		ctx.font = "24pt Arial, sans-serif";
+		ctx.textBaseline = "top";
+		playButton.x = ctx.canvas.width/2 - 100;
+		playButton.y = ctx.canvas.height/2 - 50;
+		playButton.w = 200;
+		playButton.h = 100;
+	}
+	
+	function reset()
+	{
+		brick.x = 50;
+			brick.y = 50;
+			brick.w = 20;
+			brick.h = 20;
+			brick.dx = 4;
+			brick.dy = 4;
+		lives = 5;
+		waitTime = 0;
+		mouse.clicked = false;
+	}
+	
+	function changeState( newState ) {
+		if ( timerID != -1 )
+			clearInterval(timerID);
+		if ( newState === MENU )
+			timerID = setInterval(function() { updateMenu(); drawMenu(ctx); }, 1000/60);
+		else if ( newState === PLAY ) {
+			reset();
+			timerID = setInterval(function() { updatePlay(); drawPlay(ctx); }, 1000/60);
+		}
+		else if ( newState === GAMEOVER ) {
+			waitTime = 2000;
+			lastTime = performance.now();
+			timerID = setInterval(function() { updateGameOver(); drawGameOver(ctx); }, 1000/60);
+		}
+		state = newState;
+	}
+	
+	/********************************
+	 *  M E N U  ********************
+	 *******************************/
+
+	function updateMenu() {
+		if ( mouse.clicked && contains(playButton, mouse) === true ) {
+			changeState(PLAY);
+		}
+		mouse.clicked = false;
+	}
+
+	function drawMenu(ctx) {
+		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+		ctx.strokeRect(playButton.x, playButton.y, playButton.w, playButton.h);
+		ctx.fillText("[PLAY]", playButton.x+55, playButton.y+30);
+	}
+
+	/********************************
+	 *  P L A Y  ********************
+	 *******************************/
+
+	function updatePlay() {
+		brick.x += brick.dx;
+		brick.y += brick.dy;
+		if ( brick.x+brick.w > ctx.canvas.width || brick.x < 0 ) {
+			brick.dx = -brick.dx;
+			lives--;
+		}
+		if ( brick.y+brick.h > ctx.canvas.height || brick.y < 0 ) {
+			brick.dy = -brick.dy;
+			lives--;
+		}
+		if ( lives === 0 ) {
+			changeState(GAMEOVER);
+		}
+	}
+	
+	function drawPlay(ctx) {
+		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+		ctx.fillRect(brick.x, brick.y, brick.w, brick.h);
+		ctx.fillText(""+lives, 50, 20);
+	}
+
+	/********************************
+	 *  G A M E   O V E R ***********
+	 *******************************/
+
+	function updateGameOver() {
+		var curTime = performance.now();
+		var elapsed = curTime - lastTime;
+		waitTime -= elapsed;
+		lastTime = curTime;
+		if ( waitTime <= 0 )
+			changeState(MENU);
+	}
+			
+	function drawGameOver(ctx) {
+		ctx.fillText("GAME OVER!", 200, 100);
+	}
+
+
+	main();
+	</script>
+</body>
+</html>

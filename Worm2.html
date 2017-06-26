@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Worm Advanced</title>
+	<style type='text/css'>
+		canvas { border: 1px solid black; }
+	</style>
+</head>
+<body>
+	<canvas id='canvas' width='900' height='620'></canvas>
+	<script type='text/javascript'>
+	var WIDTH = 900;
+	var HEIGHT = 620;
+	var FPS = 60;
+	var versionString = "v 1.0.3";
+
+	var head = {};
+	var food = {};
+	var tail = [];
+	var defaults = {
+		speed: 5,
+		omega: 15,
+	};
+	var corpse = null;
+	var key = {};
+	var options = {
+		wrap: false,
+		paused: false,
+	};
+
+	var score = 0;
+	var highScore = 0;
+	var logCount = 30;
+	var times = {};
+
+	var sintab = [];
+	var costab = [];
+
+	var ctx = null;
+
+	function deg2rad( d ) { return (d*Math.PI)/180; }
+
+	function init() {
+		/* default values for all variables */
+		head = {
+			x: WIDTH/2,
+			y: HEIGHT/2,
+			r: 5,
+			speed: defaults.speed,
+			angle: 15*Math.floor(Math.random()*24),
+			dx: 0,
+			dy: 0,
+			omega: defaults.omega,
+		};
+
+		if ( corpse == null ) {
+			corpse = {};
+			corpse.timeLeft = 0;
+			corpse.tail = null;
+		}
+
+		times = {
+			cur: 0,
+			last: 0,
+			elapsed: 0,
+		};
+
+		head.dy = head.speed * sintab[head.angle];
+		head.dx = head.speed * costab[head.angle];
+
+		food.r = 25;
+		food.x = food.r + Math.random()*(WIDTH-2*food.r);
+		food.y = food.r + Math.random()*(HEIGHT-2*food.r);
+
+		score = 0;
+		logCount = 30;
+
+		tail = [];
+		for ( var i = 0; i<12; i++ ) {
+			var tailpiece = {
+				x: head.x,
+				y: head.y,
+			};
+			tail.push(tailpiece);
+		}
+
+		key = {
+			left: false,
+			right: false,
+		};
+
+	}
+
+	function distance(a, b) {
+		return Math.sqrt((a.x-b.x)*(a.x-b.x) + (a.y-b.y)*(a.y-b.y));
+	}
+
+	function collide(a, b) {
+		var min_dist_sqr = (a.r+b.r)*(a.r+b.r);
+		var hyp_sqr = ((a.x-b.x)*(a.x-b.x) + (a.y-b.y)*(a.y-b.y));
+		return ( hyp_sqr <= min_dist_sqr );
+	}
+
+	function hitSelf() {
+		// LENGTH 21 can't hit self but 22 does
+		for ( var i=0; i<tail.length-20; i++ ) {
+			if ( collide(head, tail[i]) )
+				return true;
+		}
+		return false;
+	}
+
+	function wrapAround() {
+		/* wrap around edges */
+		if ( head.x < 0 )
+			head.x += WIDTH;
+		else if ( head.x > WIDTH )
+			head.x -= WIDTH;
+		if ( head.y < 0 )
+			head.y += HEIGHT;
+		else if ( head.y > HEIGHT )
+			head.y -= HEIGHT;
+	}
+
+	function wallCheck() {
+		/* hit a wall? */
+		if ( head.x < 0 || head.x > WIDTH )
+			return true;
+		else if ( head.y < 0 || head.y > HEIGHT )
+			return true;
+		return false;
+	}
+
+	function update() {
+		times.cur = Date.now();
+		if ( times.last > 0 ) {
+			times.elapsed = times.cur - times.last;
+		}
+
+		if ( corpse.timeLeft > 0 ) {
+			corpse.timeLeft -= times.elapsed;
+		}
+
+		var copy = {
+			x: head.x,
+			y: head.y,
+			r: head.r,
+		};
+		tail.push(copy);
+		tail.shift();
+
+		if ( key.left ) {
+			/* rotate counter-clockwise */
+			head.angle = (head.angle+head.omega)%360;
+		}
+		else if ( key.right ) {
+			/* rotate clockwise */
+			if ( head.angle < head.omega )
+				head.angle += 360;
+			head.angle -= head.omega;
+		}
+
+		/* adjust dx and dy for the new angle */
+		if ( key.left || key.right ) {
+			head.dy = head.speed * sintab[head.angle];
+			head.dx = head.speed * costab[head.angle];
+		}
+
+		/* move */
+		head.x += head.dx;
+		head.y += head.dy;
+
+		if ( options.wrap ) {
+			wrapAround();
+		}
+		else if ( wallCheck() ) {
+			die();
+		}
+
+		if ( collide(head, food) ) {
+			score += 1;
+			if ( score > highScore && isCheating() == false )
+				highScore = score;
+			do {
+				food.x = food.r + Math.random()*(WIDTH-2*food.r);
+				food.y = food.r + Math.random()*(HEIGHT-2*food.r);
+			} while ( distance(head,food) < 150 );
+			for ( var i=0; i<10; i++ )
+				tail.push(copy);
+		}
+
+		if ( false ) {
+			logTail();
+		}
+		if ( hitSelf() ) {
+			die();
+		}
+		times.last = times.cur;
+	}
+
+	function die() {
+		corpse.tail = tail;
+		corpse.timeLeft = 1400;
+		if ( isCheating() == false )
+			localStorage["wormScore"] = highScore.toString();
+		init();
+	}
+
+	function logTail() {
+		var out = "";
+		for ( var i=0; i<tail.length; i++ ) {
+			out += "(" + tail[i].x + "," + tail[i].y + ") ";
+		}
+		console.log(out);
+		logCount--;
+	}
+
+	function drawFood(food) {
+		ctx.fillStyle = "#ff6666";
+		ctx.beginPath();
+			ctx.arc(food.x, food.y, food.r,  0, 2*Math.PI);
+		ctx.fill();
+		if ( food.ready ) {
+			ctx.drawImage(food.img, food.x-16, food.y-16);
+		}
+	}
+
+	function drawCorpse() {
+		ctx.fillStyle = "#ff3333";
+		for ( var i=0; i<corpse.tail.length; i++ ) {
+			ctx.beginPath();
+				ctx.arc( corpse.tail[i].x, corpse.tail[i].y, corpse.tail[i].r,  0, 2*Math.PI );
+			ctx.fill();
+		}
+	}
+
+	function isCheating() {
+		if ( options.wrap == true )
+			return true;
+		if ( defaults.speed < 5 || head.speed < 5 )
+			return true;
+		if ( defaults.omega < 15 || head.omega < 15 )
+			return true;
+		return false;
+	}
+
+	function draw() {
+		ctx.clearRect(0, 0, WIDTH, HEIGHT);
+		ctx.font = "24pt Arial, sans-serif";
+		ctx.fillStyle = "#222222";
+		if ( isCheating() == false )
+			ctx.fillText("HIGH: "+highScore, 10, 20);
+		ctx.fillText(""+score, WIDTH-50, 20);
+		ctx.font = "10pt Arial, sans-serif";
+		ctx.fillText(versionString, WIDTH-50, HEIGHT-20);
+		drawFood(food);
+		if ( corpse.timeLeft > 0 ) {
+			drawCorpse();
+		}
+		ctx.fillStyle = "#6666FF";
+		for ( var i=0; i<tail.length; i++ ) {
+			ctx.beginPath();
+				ctx.arc( tail[i].x, tail[i].y, tail[i].r,  0, 2*Math.PI );
+			ctx.fill();
+		}
+		ctx.beginPath();
+			ctx.arc( head.x, head.y, head.r,  0, 2*Math.PI );
+			ctx.fillStyle = "#0000FF";
+		ctx.fill();
+	}
+
+	function handleKeyDown(evt) {
+		var code = evt.keyCode;
+		if ( code == 37 /* LEFT */ || code == 65 /* A */ )
+			key.left = true;
+		if ( code == 39 /* RIGHT */ || code == 68 /* D */ )
+			key.right = true;
+		if ( code == 82 ) /* 'r' */
+			init();
+		if ( code == 48 ) { /* '0' */
+			options.wrap = ! options.wrap;
+		}
+		if ( code == 189 ) { /* '-' */
+			defaults.speed = 3;
+			defaults.omega = 12;
+			init();
+		}
+		if ( code == 187 ) { /* '=' */
+			defaults.speed = 5;
+			defaults.omega = 15;
+			init();
+		}
+
+		if ( 37 <= code && code <= 40 )
+			evt.preventDefault();
+	}
+
+	function handleKeyUp(evt) {
+		var code = evt.keyCode;
+		if ( code == 37 /* LEFT */ || code == 65 /* A */ )
+			key.left = false;
+		if ( code == 39 /* RIGHT */ || code == 68 /* D */ )
+			key.right = false;
+
+		if ( 37 <= code && code <= 40 )
+			evt.preventDefault();
+	}
+
+	function main() {
+		/* one-time setup */
+		ctx = document.getElementById('canvas').getContext("2d");
+		document.addEventListener('keydown', handleKeyDown);
+		document.addEventListener('keyup', handleKeyUp);
+		ctx.textBaseline = "top";
+		food.ready = false;
+		food.img = new Image();
+		food.img.onload = function() { food.ready = true; }
+		food.img.src = "ljthw-logo-32px.png";
+		for ( var i=0; i<360; i++ ) {
+			sintab[i] = - Math.sin( deg2rad(i) );
+			costab[i] =   Math.cos( deg2rad(i) );
+		}
+		var temp = localStorage.getItem("wormScore");
+		if ( temp === null )
+			highScore = 0;
+		else
+			highScore = parseInt(temp, 10);
+		init();
+		setInterval(function() { update(); draw(); }, 1000/FPS);
+	}
+
+	main();
+	</script>
+</body>
+</html>

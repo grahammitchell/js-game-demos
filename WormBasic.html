@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Worm Basic 1</title>
+	<style type='text/css'>
+		canvas { border: 1px solid black; }
+	</style>
+</head>
+<body>
+	<canvas id='canvas' width='800' height='600'></canvas>
+	<script type='text/javascript'>
+		var WIDTH = 900;
+		var HEIGHT = 700;
+		var FPS = 60;
+
+		var LENGTH = 12;
+
+		var head = {
+			x: WIDTH/2,
+			y: HEIGHT/2,
+			r: 5,
+			speed: 5,
+			angle: 90,
+		};
+
+		var tail = [];
+		var dx = 0;
+		var dy = 0;
+		var omega = 15;
+		var score = 0;
+
+		var imageOK = false;
+		var img = new Image();
+		var ix = 0;
+		var iy = 0;
+
+		for ( var i = 0; i<LENGTH; i++ ) {
+			var tailpiece = {
+				x: head.x,
+				y: head.y,
+			};
+			tail.push(tailpiece);
+		}
+
+		var sintab = [];
+		var costab = [];
+
+		var left = false;
+		var right = false;
+
+		var canvasElement = document.getElementById('canvas');
+		canvasElement.width = WIDTH;
+		canvasElement.height = HEIGHT;
+		var ctx = canvasElement;
+
+		if (canvasElement.getContext) {
+			ctx = canvasElement.getContext("2d");
+			init();
+
+			setInterval(function() {
+				update();
+				draw();
+			}, 1000/FPS);
+
+		}
+		else {
+			alert("Your browser doesn't seem to support the <canvas> element. Sorry.");
+		}
+
+		function deg2rad( d ) { return (d*Math.PI)/180; }
+
+		function init() {
+			ctx.font = "24pt Arial, sans-serif";
+			ctx.textBaseline = "top";
+			img.onload = function() { imageOK = true; }
+			img.src = "ljthw-logo-32px.png";
+			for ( var i=0; i<360; i++ ) {
+				sintab[i] = - Math.sin( deg2rad(i) );
+				costab[i] =   Math.cos( deg2rad(i) );
+			}
+			dy = head.speed * sintab[head.angle];
+			dx = head.speed * costab[head.angle];
+
+			ix = 25 + Math.random()*(WIDTH-25);
+			iy = 25 + Math.random()*(HEIGHT-25);
+		}
+
+		function update() {
+			var copy = {
+				x: head.x,
+				y: head.y,
+			};
+			tail.push(copy);
+			tail.shift();
+
+			if ( left ) {
+				/* rotate counter-clockwise */
+				head.angle = (head.angle+omega)%360;
+			}
+			else if ( right ) {
+				/* rotate clockwise */
+				if ( head.angle < omega )
+					head.angle += 360;
+				head.angle -= omega;
+			}
+
+			/* adjust dx and dy for the new angle */
+			if ( left || right ) {
+				dy = head.speed * sintab[head.angle];
+				dx = head.speed * costab[head.angle];
+			}
+
+			/* move */
+			head.x += dx;
+			head.y += dy;
+
+			/* wrap around edges */
+			if ( head.x < 0 )
+				head.x += WIDTH;
+			else if ( head.x > WIDTH )
+				head.x -= WIDTH;
+			if ( head.y < 0 )
+				head.y += HEIGHT;
+			else if ( head.y > HEIGHT )
+				head.y -= HEIGHT;
+
+			var min_dist_sqr = (head.r+25)*(head.r+25);
+			var hyp_sqr = ((head.x-ix)*(head.x-ix) + (head.y-iy)*(head.y-iy));
+			if ( hyp_sqr <= min_dist_sqr ) {
+				score += 1;
+				ix = 25 + Math.random()*(WIDTH-25);
+				iy = 25 + Math.random()*(HEIGHT-25);
+				for ( var i=0; i<10; i++ )
+					tail.push(copy);
+			}
+		}
+
+		function draw() {
+			ctx.clearRect(0, 0, WIDTH, HEIGHT);
+			ctx.fillStyle = "#222222";
+			ctx.fillText(""+score, WIDTH-100, 20);
+			ctx.fillStyle = "#ff6666";
+			if ( imageOK ) {
+				ctx.beginPath();
+					ctx.arc(ix, iy, 25,  0, 2*Math.PI);
+				ctx.fill();
+				ctx.drawImage(img, ix-16, iy-16);
+			}
+			ctx.fillStyle = "#6666FF";
+			for ( var i=0; i<tail.length; i++ ) {
+				ctx.beginPath();
+					ctx.arc( tail[i].x, tail[i].y, head.r,  0, 2*Math.PI );
+				ctx.fill();
+			}
+			ctx.beginPath();
+				ctx.arc( head.x, head.y, head.r,  0, 2*Math.PI );
+				ctx.fillStyle = "#0000FF";
+			ctx.fill();
+		}
+
+		function handleKeyDown(evt) {
+			if ( evt.keyCode == 37 ) /* LEFT */
+				left = true;
+			if ( evt.keyCode == 39 ) /* RIGHT */
+				right = true;
+
+			if ( 37 <= evt.keyCode && evt.keyCode <= 40 )
+				evt.preventDefault();
+		}
+
+		function handleKeyUp(evt) {
+			if ( evt.keyCode == 37 ) /* LEFT */
+				left = false;
+			if ( evt.keyCode == 39 ) /* RIGHT */
+				right = false;
+
+			if ( 37 <= evt.keyCode && evt.keyCode <= 40 )
+				evt.preventDefault();
+		}
+
+		document.addEventListener('keydown', handleKeyDown);
+		document.addEventListener('keyup', handleKeyUp);
+	</script>
+</body>
+</html>

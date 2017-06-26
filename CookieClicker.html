@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Cookie Clicker</title>
+	<style type='text/css'>
+		h1 { text-align: center; }
+	</style>
+</head>
+<body>
+	<h1 id="count">0</h1>
+
+	<img src="cookie.jpg" id="cooky" alt="a cookie" width="391" height="360">
+
+	<button id="farmuh">BUY FARM</button>
+
+	<script type='text/javascript'>
+		var each = 1;
+
+		function bake() {
+			var c = document.getElementById('count');
+			var n = parseInt(c.innerHTML);
+			n += each;
+			c.innerHTML = ""+n;
+		}
+
+		function buyfarm() {
+			var c = document.getElementById('count');
+			var n = parseInt(c.innerHTML);
+			n -= 10;
+			c.innerHTML = ""+n;
+			setInterval(bake, 500);
+		}
+
+		var farm = document.getElementById('farmuh');
+		farm.addEventListener("mousedown", buyfarm );
+
+		var cookie = document.getElementById('cooky');
+		cookie.addEventListener("mousedown", bake );
+
+	</script>
+</body>
+</html>

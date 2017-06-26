@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html><head>
+	<meta charset="UTF-8">
+	<title>Catch 'Em All</title>
+	<style type='text/css'>canvas { border: thin solid black; }</style>
+</head>
+<body>
+	<p>Move the black box around with the arrow keys. Green boxes give you 1 point each.
+	Red boxes make you lose 10 points each.</p>
+
+	<canvas id='canvas' width='800' height='600'></canvas>
+	<script type='text/javascript'>
+		var WIDTH = 800;	var HEIGHT = 600;
+		var FPS = 60;
+		var COUNT = 10;
+		var boxes = [];
+		var score = 0;
+		var player = {
+			x: 100,
+			y: 100,
+			w: 50,
+			h: 50,
+			dx: 5,
+			dy: 5,
+		};
+
+		var move = {
+			left: false,
+			right: false,
+			up: false,
+			down: false,
+		};
+
+		var canvasElement = document.getElementById('canvas');
+		canvasElement.width = WIDTH;
+		canvasElement.height = HEIGHT;
+		var ctx = canvasElement;
+
+		function init()
+		{
+			for ( var i=0; i<COUNT; i++ ) {
+				var rect = {};
+					rect.w  = 10 + Math.random()*40;
+					rect.h  = 10 + Math.random()*40;
+					rect.x  = Math.random()*(WIDTH-rect.w);
+					rect.y  = Math.random()*(HEIGHT-rect.h);
+					rect.friend = Math.floor(Math.random()*2);
+					rect.dx = -3 + Math.random()*7;
+					rect.dy = -3 + Math.random()*7;
+				boxes.push(rect);
+			}
+		}
+
+		if (canvasElement.getContext) {
+			ctx = canvasElement.getContext("2d");
+			init();
+			setInterval(function() { update(); draw(); }, 1000/FPS);
+		}
+		else {
+			alert("Your browser doesn't support <canvas>.");
+		}
+
+		function collide( p, b ) {
+			if ( p.x > b.x + b.w )
+				return false;
+			if ( p.y > b.y + b.h )
+				return false;
+			if ( b.x > p.x + p.w )
+				return false;
+			if ( b.y > p.y + p.h )
+				return false;
+
+			return true;
+		}
+
+		function update() {
+			if ( move.up )
+				player.y -= player.dy;
+			if ( move.down )
+				player.y += player.dy;
+			if ( move.left )
+				player.x -= player.dx;
+			if ( move.right )
+				player.x += player.dx;
+
+			if ( player.x + player.w > WIDTH )
+				player.x = WIDTH - player.w;
+			if ( player.x < 0 )
+				player.x = 0;
+			if ( player.y + player.h > HEIGHT )
+				player.y = HEIGHT - player.h;
+			if ( player.y < 0 )
+				player.y = 0;
+
+			for ( var i=0; i<boxes.length; i++ ) {
+				boxes[i].x += boxes[i].dx;
+				boxes[i].y += boxes[i].dy;
+
+				if ( boxes[i].x + boxes[i].w > WIDTH || boxes[i].x < 0 )
+					boxes[i].dx *= -1;
+				if ( boxes[i].y + boxes[i].h > HEIGHT || boxes[i].y < 0 )
+					boxes[i].dy *= -1;
+
+				if ( collide(player, boxes[i]) == true ) {
+					if ( boxes[i].friend == 1 )
+					{
+						score++;
+					}
+					else
+					{
+						score -= 10;
+					}
+					boxes[i].x  = Math.random()*(WIDTH-boxes[i].w);
+					boxes[i].y  = Math.random()*(HEIGHT-boxes[i].h);
+				}
+			}
+
+		}
+
+		function draw() {
+			ctx.clearRect(0, 0, WIDTH, HEIGHT);
+			ctx.fillStyle = "#00FF00";
+			for ( var i=0; i<boxes.length; i++ ) {
+				if ( boxes[i].friend == 1 )
+					ctx.fillRect(boxes[i].x, boxes[i].y, boxes[i].w, boxes[i].h);
+			}
+			ctx.fillStyle = "#FF0000";
+			for ( var i=0; i<boxes.length; i++ ) {
+				if ( boxes[i].friend == 0 )
+					ctx.fillRect(boxes[i].x, boxes[i].y, boxes[i].w, boxes[i].h);
+			}
+
+			ctx.fillStyle = "#000000";
+			ctx.fillRect(player.x, player.y, player.w, player.h);
+			ctx.fillText(""+score, 50, 20);
+		}
+
+		function handleKeyDown(evt) {
+			if ( evt.keyCode == 38 ) /* UP */
+				move.up = true;
+			if ( evt.keyCode == 40 ) /* DOWN */
+				move.down = true;
+			if ( evt.keyCode == 37 ) /* LEFT */
+				move.left = true;
+			if ( evt.keyCode == 39 ) /* RIGHT */
+				move.right = true;
+
+			if ( 37 <= evt.keyCode && evt.keyCode <= 40 )
+				evt.preventDefault();
+		}
+
+		function handleKeyUp(evt) {
+			if ( evt.keyCode == 38 ) /* UP */
+				move.up = false;
+			if ( evt.keyCode == 40 ) /* DOWN */
+				move.down = false;
+			if ( evt.keyCode == 37 ) /* LEFT */
+				move.left = false;
+			if ( evt.keyCode == 39 ) /* RIGHT */
+				move.right = false;
+
+			if ( 37 <= evt.keyCode && evt.keyCode <= 40 )
+				evt.preventDefault();
+		}
+
+		document.addEventListener('keydown', handleKeyDown);
+		document.addEventListener('keyup', handleKeyUp);
+	</script>
+</body></html>
