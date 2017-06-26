@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Traffic Light</title>
+	<style type='text/css'>canvas { border: thin solid black; }</style>
+</head>
+<body>
+	<canvas id='canvas' width='800' height='600'></canvas>
+	<script type='text/javascript'>
+	var ctx;
+	var mouse_x = 0, mouse_y = 0;
+
+	var message;
+
+	function init()
+	{
+		document.addEventListener('click', mouseClicked);
+
+		message = "Click on one of the circles!";
+	}
+
+	function draw(ctx) {
+		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+		ctx.beginPath();
+		ctx.arc( 500, 125, 75,  0, 2*Math.PI );
+		ctx.fillStyle = "red";
+		ctx.fill();
+		if ( ctx.isPointInPath(mouse_x, mouse_y) )
+			message = "You clicked in the red circle!";
+
+		ctx.beginPath();
+		ctx.arc( 500, 285, 75,  0, 2*Math.PI );
+		ctx.fillStyle = "yellow";
+		ctx.fill();
+		if ( ctx.isPointInPath(mouse_x, mouse_y) )
+			message = "You clicked in the yellow circle!";
+
+		ctx.beginPath();
+		ctx.arc( 500, 445, 75,  0, 2*Math.PI );
+		ctx.fillStyle = "green";
+		ctx.fill();
+		if ( ctx.isPointInPath(mouse_x, mouse_y) )
+			message = "You clicked in the green circle!";
+
+		ctx.fillStyle = "black";
+		ctx.fillText(message, 50, 100);
+
+	}
+
+	function mouseClicked(e) {
+		var evt = e || window.event;
+
+		mouse_x = evt.pageX - ctx.canvas.offsetLeft;
+		mouse_y = evt.pageY - ctx.canvas.offsetTop;
+
+		message = "You clicked at (" + mouse_x + "," + mouse_y + ")";
+
+		draw(ctx);
+	}
+
+	function main() {
+		ctx = document.getElementById('canvas').getContext("2d");
+		init();
+		draw(ctx);
+	}
+
+	main();
+	</script>
+</body>
+</html>
